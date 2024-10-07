@@ -1,4 +1,7 @@
 const Listing = require("../models/listing");
+const axios = require("axios");
+
+const GEOCODE_API_KEY = '5bd7ac53f9ee4995987c403e6d550a38';
 
 module.exports.index = async (req, res) => {
     const allListings = await Listing.find({})
@@ -33,14 +36,46 @@ module.exports.showListing = async (req, res) => {
 }
 
 module.exports.createListing = async (req, res, next) => {
-    // let {title, descripton, image, price, country, location} = req.body;
-    // let listing = req.body.listing;
-    const newListing = new Listing(req.body.listing);
-    newListing.owner = req.user._id;
-    await newListing.save();
-    req.flash("success", "New Listing Created!");
-    res.redirect("/listings");
-}
+    try {
+        const url = req.file.path;
+        const filename = req.file.filename;
+
+        const newListing = new Listing(req.body.listing);
+        newListing.owner = req.user._id;
+        newListing.image = { url, filename };
+
+        // Forward Geocoding to get coordinates from location name
+        const locationName = req.body.listing.location; // Location name from the form
+        const response = await axios.get(`https://api.opencagedata.com/geocode/v1/json`, {
+            params: {
+                q: locationName,
+                key: GEOCODE_API_KEY
+            }
+        });
+
+        console.log("respose : ", response.data.results[0].geometry);
+
+        // Check if we got results from the geocoding API
+        if (response.data.results.length > 0) {
+            const coordinates = response.data.results[0].geometry; // Get the first result
+            newListing.locationCoords = {
+                type: "Point",
+                coordinates: [coordinates.lng, coordinates.lat] // Store longitude and latitude
+            };
+        } else {
+            req.flash("error", "Location not found!");
+            return res.redirect("/listings/new");
+        }
+
+        await newListing.save();
+        req.flash("success", "New Listing Created!");
+        res.redirect("/listings");
+    } catch (error) {
+        console.error(error);
+        req.flash("error", "Error creating listing.");
+        res.redirect("/listings/new");
+    }
+};
 
 module.exports.renderEditForm = async (req, res) => {
     let { id } = req.params;
@@ -49,7 +84,12 @@ module.exports.renderEditForm = async (req, res) => {
         req.flash("error", "Listing Not Exists!");
         res.redirect("/listings");
     }
-    res.render("listings/edit.ejs", { listing });
+
+    let originalImageUrl = listing.image.url;
+    //changing quality of image while showing on edit form we can also blur image refer cloudinary website here we are changing pixels
+    originalImageUrl = originalImageUrl.replace("/upload", "/upload/w_250")
+
+    res.render("listings/edit.ejs", { listing, originalImageUrl });
 }
 
 module.exports.updateListing = async (req, res) => {
@@ -58,7 +98,15 @@ module.exports.updateListing = async (req, res) => {
     }
     let { id } = req.params;
 
-    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+    let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+
+    if (typeof req.file !== "undefined") {
+        let url = req.file.path;
+        let filename = req.file.filename;
+        listing.image = { url, filename };
+        await listing.save();
+    }
+
     req.flash("success", "Listing Updated!");
     res.redirect(`/listings/${id}`);
 }

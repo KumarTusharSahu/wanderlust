@@ -26,14 +26,19 @@
       rel="stylesheet"
     />
 
-    <link rel="stylesheet" href="/css/rating.css">
+    <link rel="stylesheet" href="/css/rating.css" />
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
   </head>
   <body>
     <%- include("../includes/navbar.ejs") %>
 
     <div class="container">
-      <%- include("../includes/flash.ejs") %>
-      <%- body %>
+      <%- include("../includes/flash.ejs") %> <%- body %>
     </div>
     <%- include("../includes/footer.ejs") %>
     <script
