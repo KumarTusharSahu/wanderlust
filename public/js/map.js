@@ -1,13 +1,16 @@
+  let coordinates = listing.locationCoords.coordinates;
+  let title = listing.title;
+  
   // Initialize the map
-  var map = L.map('map').setView([28.6139, 77.2090], 13);
+  var map = L.map('map').setView([coordinates[1], coordinates[0]], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
 }).addTo(map);
 
-
-  // Add a marker at the location
-  L.marker([28.6139, 77.2090]).addTo(map)
-      .bindPopup('<%= listing.title %>')
-      .openPopup();
+console.log(coordinates);
+// Add a marker at the location
+L.marker([coordinates[1], coordinates[0]]).addTo(map)
+    .bindPopup(title)
+    .openPopup();

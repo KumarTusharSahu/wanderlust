@@ -1,7 +1,7 @@
 const Listing = require("../models/listing");
 const axios = require("axios");
 
-const GEOCODE_API_KEY = '5bd7ac53f9ee4995987c403e6d550a38';
+const GEOCODE_API_KEY = process.env.OPENCAGE_API_KEY;
 
 module.exports.index = async (req, res) => {
     const allListings = await Listing.find({})

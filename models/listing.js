@@ -25,7 +25,10 @@ const listSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User"
     },
-    
+    locationCoords: {
+        type: { type: String, enum: ['Point'], required: true }, // 'Point' for GeoJSON
+        coordinates: { type: [Number], required: true }, // [longitude, latitude]
+    },
 
 });
 
@@ -36,6 +39,7 @@ listSchema.post("findOneAndDelete", async (listing) => {
     }
 })
 
-const Listing = new mongoose.model("Listing", listSchema);
+listSchema.index({ locationCoords: '2dsphere' }); // For geospatial queries
 
+const Listing = new mongoose.model("Listing", listSchema);
 module.exports = Listing;
